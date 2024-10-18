@@ -1,0 +1,32 @@
+/* 
+
+Theme Name: BuildUp University
+Author: BuildUp University
+Author URI: https://buildupuniversity.com/
+Description: Responsive and user-friendly WordPress theme is designed to provide your website visitors with the best possible user experience, no matter what device they are using. With a modern and clean design, intuitive navigation, and easy-to-use features, this theme is perfect for anyone looking to create a website that is both functional and visually appealing.
+Version: 1.0
+
+*/
+
+:root {
+    --primary: #f26522;
+    --secondary: #0f2849;
+}
+
+.logged-in header.position-fixed {
+    margin-top: 32px;
+}
+
+@media only screen and (max-width:767px) {
+    .logged-in header.position-fixed {
+        margin-top: 45px;
+    }
+}
+
+
+@media only screen and (max-width:991px) {
+	section.hero-section {
+		padding-top: 100px !important;
+		padding-bottom: 0px !important;
+	}
+}
