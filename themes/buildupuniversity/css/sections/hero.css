@@ -6,6 +6,10 @@
     .logged-in .secondary-nav {
         margin-top: 43px;
     }
+
+    .hero {
+        min-height: 300px !important;
+    }
 }
 
 .img-hero {

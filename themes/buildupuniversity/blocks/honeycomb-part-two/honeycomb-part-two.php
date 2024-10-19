@@ -37,7 +37,7 @@ $gallery = get_field('honey_comb_part_two_images');
 if( $gallery ): 
 foreach( $gallery as $image ):
 
-echo '<a data-aos="' . $animationGroup['type'] . '" data-aos-delay="' . $animationGroup['delay'] . '" class="col-md-12 col-improve-top-row-links text-white text-center d-flex justify-content-center overflow-h">';
+echo '<a class="col-md-12 col-improve-top-row-links text-white text-center d-flex justify-content-center overflow-h">';
 
 echo '<div class="overlay-custom position-absolute w-100 h-100 z-1" style="pointer-events:none;"></div>';
 

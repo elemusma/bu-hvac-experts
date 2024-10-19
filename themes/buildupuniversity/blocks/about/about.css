@@ -7,5 +7,5 @@
 }
 
 .about-side-links:hover .about-side-links-bg {
-    background: var(--accent-secondary) !important;
+    background: var(--accent-primary) !important;
 }

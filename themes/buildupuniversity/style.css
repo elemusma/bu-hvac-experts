@@ -9,9 +9,11 @@ Version: 1.0
 */
 
 :root {
-    --primary: #f26522;
-    --secondary: #0f2849;
-}
+    --accent-primary: #24d648;
+    --accent-secondary: #58bee4;
+    --accent-tertiary: #8bc3c9;
+    --proxima-nova: proxima-nova, sans-serif;
+  }
 
 .logged-in header.position-fixed {
     margin-top: 32px;

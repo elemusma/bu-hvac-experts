@@ -4,23 +4,37 @@
 // let navMenuOverlay = document.querySelector('#navMenuOverlay');
 // let navMenuClose = document.querySelector('#navMenuClose');
 
-// let header = document.querySelector('header');
-// let blankSpace = document.querySelector('.blank-space');
+let header = document.querySelector('header');
+let blankSpace = document.querySelector('.blank-space');
 
 let logoMain = document.querySelector('#logo-main')
 let logoSecondary = document.querySelector('#logo-secondary')
 
-// window.addEventListener("scroll", parallaxEffect);
+window.addEventListener("scroll", parallaxEffect);
 
 function parallaxEffect() {
-    blankSpace.style.height = header.offsetHeight + "px";
-    header.classList.add('position-fixed');
-    header.classList.remove('position-relative');
+    // blankSpace.style.height = header.offsetHeight + "px";
+    // header.classList.add('position-fixed');
+    // header.classList.remove('position-relative');
 
-    if (scrollY < 299) {
-        logoMain.style.width = "205px"
-    } else if (scrollY > 300) {
-        logoMain.style.width = "105px"
+    if (scrollY < 199) {
+        blankSpace.style.height = "0px";
+        // logoMain.style.width = "75px"
+        header.classList.add('position-relative');
+        header.classList.add('inactive');
+		header.classList.remove('position-fixed');
+		header.classList.remove('active');
+		// header.classList.remove('scroll');
+        // blankSpace.style.height = (((header.offsetHeight)) + "px");
+    } else if (scrollY > 200) {
+        // blankSpace.style.height = (((header.offsetHeight) + 10) + "px");
+        // logoMain.style.width = "50px"
+        blankSpace.style.height = (((header.offsetHeight)) + "px");
+        header.classList.add('position-fixed');
+        header.classList.add('active');
+    	header.classList.remove('position-relative');
+    	header.classList.remove('inactive');
+        // header.classList.add('scroll');
     }
 }
 

@@ -22,24 +22,24 @@ wp_head();
 <?php
 if(get_field('body','options')) { the_field('body','options'); }
 if(get_field('body_code')) { the_field('body_code'); }
-// echo '<div class="blank-space"></div>';
 
 
-echo '<header class="position-fixed z-3 w-100" style="top:0;left:0;padding:10px 0px 8px;">';
-echo '<div class="position-absolute w-100 h-100" style="top:0;left:0;background:#021d47;opacity:.5;"></div>';
+echo '<div class="blank-space"></div>';
+echo '<header class="header-nav position-relative z-3 w-100 bg-black" style="top:0;left:0;padding:10px 0px 8px;">';
+// echo '<div class="position-absolute w-100 h-100" style="top:0;left:0;background:#021d47;opacity:.5;"></div>';
 	
 echo '<div class="nav">';
 echo '<div class="container">';
-echo '<div class="row align-items-center justify-content-between">';
+echo '<div class="row align-items-center justify-content-end">';
 
-echo '<div class="col-lg-4 col-6">';
+echo '<div class="col-lg-4 col-6 text-center">';
 echo '<a href="' . home_url() . '">';
 
 $logo = get_field('logo','options'); 
 if($logo){
 echo wp_get_attachment_image($logo['id'],'full',"",[
     'class'=>'h-auto',
-    'style'=>'width:250px;max-width:100%;transition:all 1s ease-in-out;',
+    'style'=>'width:150px;max-width:100%;transition:all 1s ease-in-out;',
     'id'=>'logo-main']); 
 }
 
@@ -48,9 +48,9 @@ echo '</div>';
 
 echo '<div class="col-lg-4 col-6 text-right text-white">';
 	
-echo '<a style="padding-right:15px;" class="d-md-block d-none" href="/#contact">Contact</a>';
+// echo '<a style="padding-right:15px;" class="d-md-block d-none" href="/#contact">Contact</a>';
 	
-echo '<a class="handel phone-nav" style="padding-left:15px;font-size:2rem;" href="tel:+1' . get_field('phone','options') . '">' . get_field('phone','options') . '</a>';
+echo '<a class="handel phone-nav" style="padding-left:15px;font-size:1.5rem;text-decoration:none;" href="tel:+1' . get_field('phone','options') . '">' . get_field('phone','options') . '</a>';
 echo '</div>';
 
 // echo '<div class="col-lg-4 col-6 desktop-hidden">';
