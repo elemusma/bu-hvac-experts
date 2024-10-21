@@ -186,6 +186,7 @@ class Tracking {
 		$data['jpg2png']          = (bool) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_jpg_to_png' );
 		$data['png2jpg']          = (bool) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_png_to_jpg' );
 		$data['gif2png']          = (bool) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_gif_to_png' );
+		$data['bmpconvert']       = (bool) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_bmp_convert' );
 		$data['fill_color']       = \is_null( \ewww_image_optimizer_jpg_background() ) ? '' : \ewww_image_optimizer_jpg_background();
 
 		$data['webp_create'] = (bool) \ewww_image_optimizer_get_option( 'ewww_image_optimizer_webp' );
@@ -263,6 +264,11 @@ class Tracking {
 	 * Check for a new opt-in via the admin notice
 	 */
 	public function check_for_optin() {
+		\check_admin_referer( 'ewww_image_optimizer_options-options' );
+		$permissions = \apply_filters( 'ewww_image_optimizer_admin_permissions', 'manage_options' );
+		if ( ! \current_user_can( $permissions ) ) {
+			\wp_die( \esc_html__( 'Access denied.', 'ewww-image-optimizer' ) );
+		}
 		\ewwwio_debug_message( '<b>' . __METHOD__ . '()</b>' );
 		\ewww_image_optimizer_set_option( 'ewww_image_optimizer_allow_tracking', 1 );
 		$this->send_checkin( true );
@@ -275,6 +281,11 @@ class Tracking {
 	 * Check for a new opt-out via the admin notice
 	 */
 	public function check_for_optout() {
+		\check_admin_referer( 'ewww_image_optimizer_options-options' );
+		$permissions = \apply_filters( 'ewww_image_optimizer_admin_permissions', 'manage_options' );
+		if ( ! \current_user_can( $permissions ) ) {
+			\wp_die( \esc_html__( 'Access denied.', 'ewww-image-optimizer' ) );
+		}
 		\ewwwio_debug_message( '<b>' . __METHOD__ . '()</b>' );
 		\delete_option( 'ewww_image_optimizer_allow_tracking' );
 		\delete_network_option( null, 'ewww_image_optimizer_allow_tracking' );
@@ -382,14 +393,12 @@ class Tracking {
 			ewww_image_optimizer_set_option( 'ewww_image_optimizer_tracking_notice', 1 );
 		} else {
 			$admin_email = '<strong>' . get_bloginfo( 'admin_email' ) . '</strong>';
-			$optin_url   = admin_url( 'admin.php?action=ewww_opt_into_tracking' );
-			$optout_url  = admin_url( 'admin.php?action=ewww_opt_out_of_tracking' );
 			echo '<div class="updated"><p>';
 				/* translators: %s: admin email as configured in settings */
 				printf( esc_html__( 'Allow EWWW Image Optimizer to track plugin usage? Opt-in to tracking and receive 500 free image credits in your admin email: %s. No sensitive data is tracked.', 'ewww-image-optimizer' ), wp_kses_post( $admin_email ) );
 				echo '&nbsp;<a href="https://docs.ewww.io/article/23-usage-tracking" target="_blank" data-beacon-article="591f3a8e2c7d3a057f893d91">' . esc_html__( 'Learn more.', 'ewww-image-optimizer' ) . '</a>';
-				echo '<a href="' . esc_url( $optin_url ) . '" class="button-secondary" style="margin-left:5px;">' . esc_html__( 'Allow', 'ewww-image-optimizer' ) . '</a>';
-				echo '<a href="' . esc_url( $optout_url ) . '" class="button-secondary" style="margin-left:5px">' . esc_html__( 'Do not allow', 'ewww-image-optimizer' ) . '</a>';
+				echo '<a href="' . esc_url( wp_nonce_url( admin_url( 'admin.php?action=ewww_opt_into_tracking' ), 'ewww_image_optimizer_options-options' ) ) . '" class="button-secondary" style="margin-left:5px;">' . esc_html__( 'Allow', 'ewww-image-optimizer' ) . '</a>';
+				echo '<a href="' . esc_url( wp_nonce_url( admin_url( 'admin.php?action=ewww_opt_out_of_tracking' ), 'ewww_image_optimizer_options-options' ) ) . '" class="button-secondary" style="margin-left:5px">' . esc_html__( 'Do not allow', 'ewww-image-optimizer' ) . '</a>';
 			echo '</p></div>';
 		}
 	}

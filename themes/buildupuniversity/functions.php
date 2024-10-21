@@ -39,9 +39,10 @@ wp_enqueue_style('style', get_stylesheet_uri() );
 wp_enqueue_style('layouts', get_theme_file_uri('/css/sections/layouts.css'));
 wp_enqueue_style('body', get_theme_file_uri('/css/sections/body.css'));
 wp_enqueue_style('nav', get_theme_file_uri('/css/sections/nav.css'));
-wp_enqueue_style('popup', get_theme_file_uri('/blocks/popup/popup.css'));
+wp_enqueue_style('popup', get_theme_file_uri('/css/sections/popup.css'));
 wp_enqueue_style('hero', get_theme_file_uri('/css/sections/hero.css'));
-wp_enqueue_style('contact', get_theme_file_uri('/blocks/global-contact.css'));
+// wp_enqueue_style('contact', get_theme_file_uri('/blocks/global-contact.css'));
+wp_enqueue_style('contact', get_theme_file_uri('/css/sections/contact.css'));
 wp_enqueue_style('img', get_theme_file_uri('/css/elements/img.css'));
 
 
@@ -55,12 +56,12 @@ wp_enqueue_style('social-icons', get_theme_file_uri('/css/sections/social-icons.
 wp_enqueue_style('btn', get_theme_file_uri('/css/elements/btn.css'));
 // fonts
 wp_enqueue_style('fonts', get_theme_file_uri('/css/elements/fonts.css'));
-// wp_enqueue_style('proxima-nova', get_theme_file_uri('/proxima-nova/proxima-nova.css'));
+wp_enqueue_style('font-proxima-nova', get_theme_file_uri('/font-proxima-nova/font-proxima-nova.css'));
 wp_enqueue_style('blair-itc', get_theme_file_uri('/blair-itc/blair-itc.css'));
 wp_enqueue_style('aspira', get_theme_file_uri('/aspira-font/aspira-font.css'));
 wp_enqueue_style('coromant-garamond', '//use.typekit.net/fqe2slt.css');
 wp_enqueue_style('handel', '//use.typekit.net/lcf3uey.css');
-wp_enqueue_style('proxima-nova', '//use.typekit.net/juf0ejx.css');
+// wp_enqueue_style('proxima-nova', '//use.typekit.net/juf0ejx.css');
 
 }
 add_action('wp_enqueue_scripts', 'ioc_stylesheets');

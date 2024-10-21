@@ -85,7 +85,7 @@ class Breeze_ConfigCache {
 			               "\n\r" . 'if ( ! @file_exists( \'' . BREEZE_PLUGIN_DIR . 'breeze.php\' ) ) { return; }';
 		}
 
-		if ( 1 === count( $cache_configs ) ) {
+		if ( !is_multisite() && 1 === count( $cache_configs ) ) {
 			// Only 1 config file available.
 			$blog_file   = trailingslashit( WP_CONTENT_DIR ) . 'breeze-config/breeze-config.php';
 			$file_string .= "\n\$config['config_path'] = '$blog_file';";
@@ -208,11 +208,13 @@ class Breeze_ConfigCache {
 		$lazy_load_native  = Breeze_Options_Reader::get_option_value( 'breeze-lazy-load-native', false, $create_root_config );
 		$preload_links     = Breeze_Options_Reader::get_option_value( 'breeze-preload-links', false, $create_root_config );
 		$lazy_load_iframes = Breeze_Options_Reader::get_option_value( 'breeze-lazy-load-iframes', false, $create_root_config );
+		$lazy_load_videos = Breeze_Options_Reader::get_option_value( 'breeze-lazy-load-videos', false, $create_root_config );
 
 		$storage['enabled-lazy-load']        = ( isset( $lazy_load ) ? $lazy_load : 0 );
 		$storage['use-lazy-load-native']     = ( isset( $lazy_load_native ) ? $lazy_load_native : 0 );
 		$storage['breeze-preload-links']     = ( isset( $preload_links ) ? $preload_links : 0 );
 		$storage['breeze-lazy-load-iframes'] = ( isset( $lazy_load_iframes ) ? $lazy_load_iframes : 0 );
+		$storage['breeze-lazy-load-videos'] = ( isset( $lazy_load_videos ) ? $lazy_load_videos : 0 );
 
 		//  CURCY - WooCommerce Multi Currency Premium.
 		if (

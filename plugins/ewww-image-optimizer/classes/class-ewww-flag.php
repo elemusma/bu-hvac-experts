@@ -10,7 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// TODO: may be able to make things more efficient by not getting a new flagMeta, but get a new flagImage instead, but still probably need it to migrate data to ewwwio_images.
 if ( ! class_exists( 'EWWW_Flag' ) ) {
 	/**
 	 * Allows EWWW to integrate with the GRAND FlaGallery plugin.
@@ -47,7 +46,6 @@ if ( ! class_exists( 'EWWW_Flag' ) ) {
 			add_action( 'admin_menu', array( $this, 'ewww_flag_bulk_menu' ) );
 			add_action( 'admin_enqueue_scripts', array( $this, 'ewww_flag_bulk_script' ), PHP_INT_MAX );
 			add_action( 'wp_ajax_bulk_flag_init', array( $this, 'ewww_flag_bulk_init' ) );
-			add_action( 'wp_ajax_bulk_flag_filename', array( $this, 'ewww_flag_bulk_filename' ) );
 			add_action( 'wp_ajax_bulk_flag_loop', array( $this, 'ewww_flag_bulk_loop' ) );
 			add_action( 'wp_ajax_bulk_flag_cleanup', array( $this, 'ewww_flag_bulk_cleanup' ) );
 		}
@@ -111,7 +109,7 @@ if ( ! class_exists( 'EWWW_Flag' ) ) {
 			<div class="wrap"><h1>GRAND FlAGallery <?php esc_html_e( 'Bulk Optimize', 'ewww-image-optimizer' ); ?></h1>
 			<?php
 			if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ) ) {
-				ewww_image_optimizer_cloud_verify( ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ) );
+				ewww_image_optimizer_cloud_verify( ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ), false );
 				echo '<a id="ewww-bulk-credits-available" target="_blank" class="page-title-action" style="float:right;" href="https://ewww.io/my-account/">' . esc_html__( 'Image credits available:', 'ewww-image-optimizer' ) . ' ' . esc_html( ewww_image_optimizer_cloud_quota() ) . '</a>';
 			}
 			if ( ! ewww_image_optimizer_get_option( 'ewww_image_optimizer_backup_files' ) ) {
@@ -343,7 +341,6 @@ if ( ! class_exists( 'EWWW_Flag' ) ) {
 		 */
 		public function ewww_added_new_image( $id, $image ) {
 			ewwwio_debug_message( '<b>' . __METHOD__ . '()</b>' );
-			global $ewww_defer;
 			global $ewww_image;
 			// Make sure the image path is set.
 			if ( ! isset( $image->image->imagePath ) ) {
@@ -435,8 +432,7 @@ if ( ! class_exists( 'EWWW_Flag' ) ) {
 				wp_die( wp_json_encode( array( 'error' => esc_html__( 'Access denied.', 'ewww-image-optimizer' ) ) ) );
 			}
 			global $ewww_image;
-			global $ewww_force;
-			$ewww_force = ! empty( $_REQUEST['ewww_force'] ) ? true : false;
+			ewwwio()->force = ! empty( $_REQUEST['ewww_force'] ) ? true : false;
 			if ( ! class_exists( 'flagMeta' ) ) {
 				require_once FLAG_ABSPATH . 'lib/meta.php';
 			}
@@ -533,7 +529,7 @@ if ( ! class_exists( 'EWWW_Flag' ) ) {
 				$attachments = unserialize( $attachments );
 			}
 			if ( ! is_array( $attachments ) ) {
-				$output['error'] = esc_html__( 'Error retrieving list of images' );
+				$output['error'] = esc_html__( 'Error retrieving list of images', 'ewww-image-optimizer' );
 				ewwwio_ob_clean();
 				wp_die( wp_json_encode( $output ) );
 			}
@@ -576,10 +572,9 @@ if ( ! class_exists( 'EWWW_Flag' ) ) {
 		 */
 		public function ewww_flag_bulk_loop() {
 			ewwwio_debug_message( '<b>' . __METHOD__ . '()</b>' );
-			global $ewww_defer;
-			$ewww_defer  = false;
-			$output      = array();
-			$permissions = apply_filters( 'ewww_image_optimizer_bulk_permissions', '' );
+			ewwwio()->defer = false;
+			$output         = array();
+			$permissions    = apply_filters( 'ewww_image_optimizer_bulk_permissions', '' );
 			if ( empty( $_REQUEST['ewww_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['ewww_wpnonce'] ), 'ewww-image-optimizer-bulk' ) || ! current_user_can( $permissions ) ) {
 				$output['error'] = esc_html__( 'Access token has expired, please reload the page.', 'ewww-image-optimizer' );
 				ewwwio_ob_clean();
@@ -609,12 +604,17 @@ if ( ! class_exists( 'EWWW_Flag' ) ) {
 			// Optimize the full-size version.
 			$fres = ewww_image_optimizer( $file_path, 3, false, false, true );
 			if ( 'exceeded' === get_transient( 'ewww_image_optimizer_cloud_status' ) ) {
-				$output['error'] = '<a href="https://ewww.io/buy-credits/" target="_blank">' . esc_html__( 'License Exceeded', 'ewww-image-optimizer' ) . '</a>';
+				$output['error'] = ewww_image_optimizer_credits_exceeded();
 				ewwwio_ob_clean();
 				wp_die( wp_json_encode( $output ) );
 			}
 			if ( 'exceeded quota' === get_transient( 'ewww_image_optimizer_cloud_status' ) ) {
-				$output['error'] = '<a href="https://docs.ewww.io/article/101-soft-quotas-on-unlimited-plans" target="_blank">' . esc_html__( 'Soft quota reached, contact us for more', 'ewww-image-optimizer' ) . '</a>';
+				$output['error'] = ewww_image_optimizer_soft_quota_exceeded();
+				ewwwio_ob_clean();
+				wp_die( wp_json_encode( $output ) );
+			}
+			if ( 'exceeded subkey' === get_transient( 'ewww_image_optimizer_cloud_status' ) ) {
+				$output['error'] = esc_html__( 'Out of credits', 'ewww-image-optimizer' );
 				ewwwio_ob_clean();
 				wp_die( wp_json_encode( $output ) );
 			}

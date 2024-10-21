@@ -49,16 +49,12 @@ class EWWWIO_CLI extends WP_CLI_Command {
 	 *
 	 * @synopsis <library> [<delay>] [--force] [--reset] [--webp-only] [--noprompt]
 	 *
-	 * @global bool $ewww_defer Gets set to false to make sure optimization happens inline.
-	 *
 	 * @param array $args A numeric array of required arguments.
 	 * @param array $assoc_args An associative array of optional arguments.
 	 */
 	public function optimize( $args, $assoc_args ) {
-		global $ewww_defer;
-		$ewww_defer = false;
-		global $ewww_webp_only;
-		$ewww_webp_only = false;
+		ewwwio()->defer     = false;
+		ewwwio()->webp_only = false;
 		// because NextGEN hasn't flushed it's buffers...
 		while ( @ob_end_flush() ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 		}
@@ -85,20 +81,22 @@ class EWWWIO_CLI extends WP_CLI_Command {
 		if ( ! empty( $assoc_args['force'] ) ) {
 			WP_CLI::line( __( 'Forcing re-optimization of previously processed images.', 'ewww-image-optimizer' ) );
 			$_REQUEST['ewww_force'] = true;
-			global $ewww_force;
-			$ewww_force = 1;
+			ewwwio()->force         = 1;
 		}
 		if ( ! empty( $assoc_args['webp-only'] ) ) {
 			if ( empty( ewww_image_optimizer_get_option( 'ewww_image_optimizer_webp' ) ) ) {
 				WP_CLI::error( __( 'WebP Conversion is not enabled.', 'ewww-image-optimizer' ) );
 			}
 			WP_CLI::line( __( 'Running WebP conversion only.', 'ewww-image-optimizer' ) );
-			$ewww_webp_only = true;
+			ewwwio()->webp_only = true;
 		}
 		/* translators: 1: type of images, like media, or nextgen 2: number of seconds */
 		WP_CLI::line( sprintf( _x( 'Optimizing %1$s with a %2$d second pause between images.', 'string will be something like "media" or "nextgen"', 'ewww-image-optimizer' ), $library, $delay ) );
 		// Let's get started, shall we?
 		ewwwio()->admin_init();
+
+		// Allow async API procesing. This will still stall the process until a result is retrieved, or the max retries is reached.
+		\ewwwio()->cloud_async_allowed = true;
 
 		// And what shall we do?
 		switch ( $library ) {
@@ -288,12 +286,6 @@ class EWWWIO_CLI extends WP_CLI_Command {
 		}
 		global $eio_backup;
 		global $wpdb;
-		if ( strpos( $wpdb->charset, 'utf8' ) === false ) {
-			ewww_image_optimizer_db_init();
-			global $ewwwdb;
-		} else {
-			$ewwwdb = $wpdb;
-		}
 
 		$completed = 0;
 		$position  = (int) get_option( 'ewww_image_optimizer_bulk_restore_position' );
@@ -359,7 +351,7 @@ class EWWWIO_CLI extends WP_CLI_Command {
 
 		$cleanable_uploads = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT count(ID) FROM $wpdb->posts WHERE ID > %d AND (post_type = 'attachment' OR post_type = 'ims_image') AND post_mime_type LIKE %s",
+				"SELECT count(ID) FROM $wpdb->posts WHERE ID > %d AND post_type = 'attachment' AND post_mime_type LIKE %s",
 				(int) $position,
 				'%image%'
 			)
@@ -378,7 +370,7 @@ class EWWWIO_CLI extends WP_CLI_Command {
 
 		$attachments = $wpdb->get_col(
 			$wpdb->prepare(
-				"SELECT ID FROM $wpdb->posts WHERE ID > %d AND (post_type = 'attachment' OR post_type = 'ims_image') AND post_mime_type LIKE %s ORDER BY ID LIMIT %d",
+				"SELECT ID FROM $wpdb->posts WHERE ID > %d AND post_type = 'attachment' AND post_mime_type LIKE %s ORDER BY ID LIMIT %d",
 				(int) $position,
 				'%image%',
 				(int) $per_page
@@ -401,7 +393,7 @@ class EWWWIO_CLI extends WP_CLI_Command {
 			}
 			$attachments = $wpdb->get_col(
 				$wpdb->prepare(
-					"SELECT ID FROM $wpdb->posts WHERE ID > %d AND (post_type = 'attachment' OR post_type = 'ims_image') AND post_mime_type LIKE %s ORDER BY ID LIMIT %d",
+					"SELECT ID FROM $wpdb->posts WHERE ID > %d AND post_type = 'attachment' AND post_mime_type LIKE %s ORDER BY ID LIMIT %d",
 					(int) $id,
 					'%image%',
 					(int) $per_page
@@ -426,12 +418,6 @@ class EWWWIO_CLI extends WP_CLI_Command {
 			delete_option( 'ewww_image_optimizer_delete_originals_resume' );
 		}
 		global $wpdb;
-		if ( strpos( $wpdb->charset, 'utf8' ) === false ) {
-			ewww_image_optimizer_db_init();
-			global $ewwwdb;
-		} else {
-			$ewwwdb = $wpdb;
-		}
 
 		$per_page = 200;
 
@@ -503,12 +489,6 @@ class EWWWIO_CLI extends WP_CLI_Command {
 			delete_option( 'ewww_image_optimizer_webp_clean_position' );
 		}
 		global $wpdb;
-		if ( strpos( $wpdb->charset, 'utf8' ) === false ) {
-			ewww_image_optimizer_db_init();
-			global $ewwwdb;
-		} else {
-			$ewwwdb = $wpdb;
-		}
 
 		$completed = 0;
 		$per_page  = 200;
@@ -519,7 +499,7 @@ class EWWWIO_CLI extends WP_CLI_Command {
 
 		$cleanable_uploads = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT count(ID) FROM $wpdb->posts WHERE ID > %d AND (post_type = 'attachment' OR post_type = 'ims_image') AND (post_mime_type LIKE %s OR post_mime_type LIKE %s)",
+				"SELECT count(ID) FROM $wpdb->posts WHERE ID > %d AND post_type = 'attachment' AND (post_mime_type LIKE %s OR post_mime_type LIKE %s)",
 				(int) $position1,
 				'%image%',
 				'%pdf%'
@@ -545,7 +525,7 @@ class EWWWIO_CLI extends WP_CLI_Command {
 
 		$attachment_ids = $wpdb->get_col(
 			$wpdb->prepare(
-				"SELECT ID FROM $wpdb->posts WHERE ID > %d AND (post_type = 'attachment' OR post_type = 'ims_image') AND (post_mime_type LIKE %s OR post_mime_type LIKE %s) ORDER BY ID LIMIT %d",
+				"SELECT ID FROM $wpdb->posts WHERE ID > %d AND post_type = 'attachment' AND (post_mime_type LIKE %s OR post_mime_type LIKE %s) ORDER BY ID LIMIT %d",
 				(int) $position1,
 				'%image%',
 				'%pdf%',
@@ -567,7 +547,7 @@ class EWWWIO_CLI extends WP_CLI_Command {
 			}
 			$attachment_ids = $wpdb->get_col(
 				$wpdb->prepare(
-					"SELECT ID FROM $wpdb->posts WHERE ID > %d AND (post_type = 'attachment' OR post_type = 'ims_image') AND (post_mime_type LIKE %s OR post_mime_type LIKE %s) ORDER BY ID LIMIT %d",
+					"SELECT ID FROM $wpdb->posts WHERE ID > %d AND post_type = 'attachment' AND (post_mime_type LIKE %s OR post_mime_type LIKE %s) ORDER BY ID LIMIT %d",
 					(int) $id,
 					'%image%',
 					'%pdf%',
@@ -729,10 +709,9 @@ class EWWWIO_CLI extends WP_CLI_Command {
 		}
 		$attachments = $images; // Kept separate to update status in db.
 		global $ewwwngg;
-		global $ewww_defer;
-		$ewww_defer    = false;
-		$clicount      = 0;
-		$pending_count = count( $images );
+		ewwwio()->defer = false;
+		$clicount       = 0;
+		$pending_count  = count( $images );
 		foreach ( $images as $id ) {
 			if ( ewww_image_optimizer_function_exists( 'sleep' ) ) {
 				sleep( $delay );
@@ -815,8 +794,7 @@ class EWWWIO_CLI extends WP_CLI_Command {
 	 */
 	private function bulk_nextcellent( $delay, $attachments ) {
 		global $ewwwngg;
-		global $ewww_defer;
-		$ewww_defer = false;
+		ewwwio()->defer = false;
 		// Toggle the resume flag to indicate an operation is in progress.
 		update_option( 'ewww_image_optimizer_bulk_ngg_resume', 'true' );
 		// Need this file to work with metadata.

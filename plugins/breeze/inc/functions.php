@@ -714,32 +714,32 @@ function breeze_all_country_codes() {
 /**
  * Load Mobile Detect library based on PHP version
  *
- * @return \Detection\MobileDetect|false
+ * @return \Breeze\Detection\MobileDetect|false
  */
 function breeze_mobile_detect_library() {
 	$call_class     = false;
 	$path_to_plugin = dirname( __FILE__, 2 ) . '/';
 
-	if ( ! class_exists( '\Detection\MobileDetect' ) ) {
+	if ( ! class_exists( '\Breeze\Detection\MobileDetect' ) ) {
 		if ( version_compare( PHP_VERSION, '7.3.0' ) >= 0 && version_compare( PHP_VERSION, '8.0.0', '<' ) ) {
 			// Mobile detect 3.74
-			require_once( $path_to_plugin . 'vendor-extra/mobiledetect/php7/vendor/autoload.php' );
+			require_once( $path_to_plugin . 'vendor-extra/mobiledetect/build/php7/vendor/autoload.php' );
 			$call_class = true;
 		}
 
 		if ( version_compare( PHP_VERSION, '8.0.0' ) >= 0 ) {
 			// Mobile detect 4.8
-			require_once( $path_to_plugin . 'vendor-extra/mobiledetect/php8/vendor/autoload.php' );
+			require_once( $path_to_plugin . 'vendor-extra/mobiledetect/build/php8/vendor/autoload.php' );
 			$call_class = true;
 		}
 	}
 
-	if ( class_exists( '\Detection\MobileDetect' ) ) {
+	if ( class_exists( '\Breeze\Detection\MobileDetect' ) ) {
 		$call_class = true;
 	}
 
 	if ( true === $call_class ) {
-		return new \Detection\MobileDetect;
+		return new \Breeze\Detection\MobileDetect;
 	}
 
 	return false;
@@ -889,4 +889,30 @@ function breeze_page_provided_headers() {
 	}
 
 	return $headers_output_return;
+}
+
+function breeze_org_versions() {
+
+	$url = 'https://api.wordpress.org/plugins/info/1.0/breeze.json?fields=versions';
+
+	$response = wp_remote_get( $url );
+	if ( is_wp_error( $response ) ) {
+		return false;
+	}
+
+	$response_body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+	// Get all versions
+	$versions = array_keys( $response_body['versions'] );
+
+	// Sort versions in descending order
+	usort( $versions, 'version_compare' );
+
+	$current_version_index = array_search( BREEZE_VERSION, $versions ) + 1;
+
+	$prev_5_versions = array_slice( $versions, $current_version_index - 5, 5 );
+
+	$prev_5_versions = array_reverse( $prev_5_versions );
+
+	return $prev_5_versions;
 }

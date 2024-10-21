@@ -18,6 +18,10 @@
         left:0;
         opacity:1;
         transition:all .25s ease-in-out;
+        z-index:1;
+    }
+    img {
+        transition:all .25s ease-in-out;
     }
 .col:hover {
     .col-inner {
@@ -25,6 +29,9 @@
     }
     .overlay {
         opacity:0;
+    }
+    img {
+        transform:scale(1.1);
     }
 } 
 

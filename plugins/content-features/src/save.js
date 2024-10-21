@@ -67,7 +67,7 @@ export default function save( { attributes } ) {
 			</div>
 			
             </div>
-			<div className={`position-relative`} style={feature.col_img_style}>
+			<div className={feature.col_img_class} style={feature.col_img_style}>
 <div className={`overlay`}></div>
 			{ feature.img && (
 				<img src={feature.img} alt={feature.alt} style={feature.img_style} class={feature.img_class} />

@@ -31,6 +31,22 @@ jQuery( document ).ready(
 			);
 		}
 
+		$( document ).on(
+			'click',
+			'.rollback-button',
+			function (e) {
+				e.preventDefault();
+				const selectedVersion = $('.breeze-version').val();
+				// Display form submit confirmation dialog
+				const confirmation = confirm("Want to rollback version " + selectedVersion + " ?");
+    
+				// If user confirms, submit the form
+				if (confirmation) {
+					document.getElementById("breeze_rollback_form").submit();
+				}
+			}
+		);
+
 		// Topbar action
 		$( document ).on(
 			'click',
@@ -380,14 +396,18 @@ jQuery( document ).ready(
 
 				var native_lazy = $( '#native-lazy-option' );
 				var native_lazy_iframes = $( '#native-lazy-option-iframe' );
+				var native_lazy_video = $( '#native-lazy-option-videos' );
 				if ( true === $( this ).is( ':checked' ) ) {
 					native_lazy.show();
 					native_lazy_iframes.show();
+					native_lazy_video.show();
 				} else {
 					native_lazy.hide();
 					native_lazy_iframes.hide();
+					native_lazy_video.hide();
 					$( '#bz-lazy-load-nat' ).attr( 'checked', false );
 					$( '#bz-lazy-load-iframe' ).attr( 'checked', false );
+					$( '#bz-lazy-load-videos' ).attr( 'checked', false );
 				}
 			}
 		);
@@ -933,7 +953,7 @@ jQuery( document ).ready(
 		if ( window.history && typeof window.history.pushState === 'function' ) {
 			var clean_url = remove_query_arg( window.location.href, 'save-settings' );
 			clean_url     = remove_query_arg( clean_url, 'database-cleanup' );
-			window.history.pushState( null, null, clean_url );
+			window.history.replaceState( null, null, clean_url );
 		}
 
 		/**
@@ -1052,8 +1072,7 @@ jQuery( document ).ready(
 		},
 		1000
 	);
-
-
+	
 	$( window ).on(
 		'resize',
 		function () {

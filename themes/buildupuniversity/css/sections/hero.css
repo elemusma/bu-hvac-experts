@@ -2,6 +2,11 @@
     margin-top: 32px;
 }
 
+@media only screen and (max-width:991px) {
+    .hero {
+        min-height: calc(100vh - 765px) !important;
+    }
+}
 @media only screen and (max-width:767px) {
     .logged-in .secondary-nav {
         margin-top: 43px;

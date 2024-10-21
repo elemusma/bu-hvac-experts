@@ -1,10 +1,9 @@
 <?php
 echo '<footer>';
-echo '<section class="position-relative" style="padding-top:50px;">';
-
-echo wp_get_attachment_image(114,'full','',[
-    'class'=>'w-100 h-100 position-absolute bg-img'
-]);
+echo '<section class="position-relative bg-black" style="padding:50px 0px;">';
+// echo wp_get_attachment_image(114,'full','',[
+//     'class'=>'w-100 h-100 position-absolute bg-img'
+// ]);
 
 echo '<div class="container">';
 echo '<div class="row justify-content-center">';
@@ -22,17 +21,19 @@ echo wp_get_attachment_image($logo['id'],'full',"",['class'=>'w-100 h-auto']);
 
 echo '</a>';
 echo '</div>';
-echo '<div class="col-12">';
 
-wp_nav_menu(array(
-'menu' => 'Footer Menu',
-'menu_class'=>'menu d-flex flex-wrap list-unstyled justify-content-center text-white text-uppercase'
-));
+// echo '<div class="col-12">';
 
-echo '</div>';
+// wp_nav_menu(array(
+// 'menu' => 'Footer Menu',
+// 'menu_class'=>'menu d-flex flex-wrap list-unstyled justify-content-center text-white text-uppercase'
+// ));
+
+// echo '</div>';
+
 echo '<div class="col-12 text-center text-white">';
 
-echo '<p class="mb-0">Phone: <a href="tel:+1' . get_field('phone','options') . '" class="text-white">' . get_field('phone','options') . '</a> <span class="ml-3 mr-3">|</span> Address: ' . get_field('address','options') . ' <span class="ml-3 mr-3">|</span> Email: <a href="mailto:' . get_field('email','options') . '" target="_blank" class="text-white">' . get_field('email','options') . '</a><span></span></p>';
+echo '<p class="mb-0">Phone: <a href="tel:+1' . get_field('phone','options') . '" class="text-white">' . get_field('phone','options') . '</a> <span class="ml-3 mr-3">|</span> Address: ' . get_field('address','options') . ' <span class="ml-3 mr-3">|</span><br>Email: <a href="mailto:' . get_field('email','options') . '" target="_blank" class="" style="color:var(--accent-quaternary);">' . get_field('email','options') . '</a><span></span></p>';
 
 echo '<div class="si pt-4 pb-4 d-flex flex-wrap justify-content-center">';
 
@@ -60,7 +61,7 @@ echo '</div>';
 echo '</div>';
 echo '</div>';
 echo '</section>';
-echo '<div class="text-center" style="background:#d9d9d9;padding:10px 0px;margin:10px 0px;">';
+echo '<div class="text-center" style="background:#404040;padding:10px 0px;">';
     echo '<p class="" style="margin:0;"><a href="https://buildupuniversity.com" target="_blank" rel="noopener noreferrer" style="color:#848484;text-decoration:none;">WEB DEVELOPMENT &amp; DESIGN</a> BY BUILDUP</p>';
 echo '</div>';
 echo '</footer>';

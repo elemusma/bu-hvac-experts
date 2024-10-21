@@ -19,12 +19,19 @@
   left: 0;
   opacity: 1;
   transition: all 0.25s ease-in-out;
+  z-index: 1;
+}
+.wp-block-create-block-content-features img {
+  transition: all 0.25s ease-in-out;
 }
 .wp-block-create-block-content-features .col:hover .col-inner {
   background: var(--accent-primary);
 }
 .wp-block-create-block-content-features .col:hover .overlay {
   opacity: 0;
+}
+.wp-block-create-block-content-features .col:hover img {
+  transform: scale(1.1);
 }
 
 /*# sourceMappingURL=style-index.css.map*/

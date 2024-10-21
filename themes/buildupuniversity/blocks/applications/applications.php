@@ -26,7 +26,7 @@ if(have_rows('sidebar_titles_repeater')):
     echo '<div class="col-lg-2 order-md-2 order-2" data-aos="fade-up" data-aos-delay="200">';
     echo '<ul class="list-unstyled ul-applications">';
     while(have_rows('sidebar_titles_repeater')): the_row();
-        echo '<li class="text-accent-green-1 handel">' . get_sub_field('title') . '</li>';
+        echo '<li class="text-accent-secondary proxima-thin">' . get_sub_field('title') . '</li>';
     endwhile;
 echo '</ul>';
 echo '</div>';
@@ -124,10 +124,14 @@ echo '<div class="container">';
 
 echo '<div class="col-12" style="padding-top:100px;">';
 
-echo wp_get_attachment_image(234,'full','',[
-    'class'=>'w-100 h-auto',
-    'style'=>''
-]);
+// echo '<hr>';
+
+echo '<div class="bg-black w-100" style="height:2px;"></div>';
+
+// echo wp_get_attachment_image(234,'full','',[
+//     'class'=>'w-100 h-auto',
+//     'style'=>''
+// ]);
 
 echo '</div>';
 

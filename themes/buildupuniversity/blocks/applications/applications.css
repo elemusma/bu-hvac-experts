@@ -1,3 +1,10 @@
+/* hvac experts css specific */
+h3.mb-0.heading.text-uppercase.h5.handel,
+.overlay-custom {
+    display: none;
+}
+/* hvac experts css specific */
+
 /* start of applications */
 
 /* start of ul */
@@ -5,7 +12,7 @@
 .ul-improve li {
     font-size: 1.35rem;
     line-height: 2.5;
-    text-decoration: underline;
+    /* text-decoration: underline; */
 }
 
 @media screen and (max-width:991px) {

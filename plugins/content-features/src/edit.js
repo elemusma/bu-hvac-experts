@@ -78,7 +78,7 @@ export default function Edit( { attributes, setAttributes } ) {
 		title_style: '',
 		content: '',
 		code_block: '',
-		col_img_class: 'position-relative',
+		col_img_class: 'position-relative overflow-h',
 		col_img_style: 'border-top:4px solid white;border-right:2px solid white;',
 		img: '',
 		img_class: 'w-100',

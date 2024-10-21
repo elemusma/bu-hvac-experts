@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Breeze
  * Description: Breeze is a WordPress cache plugin with extensive options to speed up your website. All the options including Varnish Cache are compatible with Cloudways hosting.
- * Version: 2.1.3
+ * Version: 2.1.15
  * Text Domain: breeze
  * Domain Path: /languages
  * Author: Cloudways
@@ -37,7 +37,7 @@ if ( ! defined( 'BREEZE_PLUGIN_DIR' ) ) {
 	define( 'BREEZE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 }
 if ( ! defined( 'BREEZE_VERSION' ) ) {
-	define( 'BREEZE_VERSION', '2.1.3' );
+	define( 'BREEZE_VERSION', '2.1.15' );
 }
 if ( ! defined( 'BREEZE_SITEURL' ) ) {
 	define( 'BREEZE_SITEURL', get_site_url() );
@@ -92,6 +92,7 @@ require_once BREEZE_PLUGIN_DIR . 'inc/class-breeze-heartbeat-settings.php';
 require_once( BREEZE_PLUGIN_DIR . 'inc/cache/purge-varnish.php' );
 require_once( BREEZE_PLUGIN_DIR . 'inc/cache/purge-cache.php' );
 require_once( BREEZE_PLUGIN_DIR . 'inc/cache/purge-per-time.php' );
+require_once( BREEZE_PLUGIN_DIR . 'inc/cache/class-purge-post-cache.php' );
 // Handle post exclude if shortcode.
 require_once( BREEZE_PLUGIN_DIR . 'inc/class-exclude-pages-by-shortcode.php' );
 // Handle the WP emoji library.
@@ -111,6 +112,11 @@ require_once( BREEZE_PLUGIN_DIR . 'inc/class-breeze-preload-fonts.php' );
 
 // Load Store Local Files class.
 require_once( BREEZE_PLUGIN_DIR . 'inc/class-breeze-store-files-locally.php' );
+
+// Load Breeze Rollback Functionality.
+if ( isset( $_GET['page'] ) && 'breeze-rollback' === $_GET['page'] ) {
+	require_once( BREEZE_PLUGIN_DIR . 'inc/rollback/class-breeze-rollback.php' );
+}
 
 // Include cronjobs (Gravatars curently(
 require_once BREEZE_PLUGIN_DIR . 'inc/class-breeze-cache-cronjobs.php';
@@ -136,13 +142,13 @@ if ( is_admin() || 'cli' === php_sapi_name() ) {
 
 } else {
 	if ( ! empty( Breeze_Options_Reader::get_option_value( 'cdn-active' ) )
-	     || ! empty( Breeze_Options_Reader::get_option_value( 'breeze-minify-js' ) )
-	     || ! empty( Breeze_Options_Reader::get_option_value( 'breeze-minify-css' ) )
-	     || ! empty( Breeze_Options_Reader::get_option_value( 'breeze-minify-html' ) )
-	     || ! empty( Breeze_Options_Reader::get_option_value( 'breeze-defer-js' ) )
-	     || ! empty( Breeze_Options_Reader::get_option_value( 'breeze-move-to-footer-js' ) )
-	     || ! empty( Breeze_Options_Reader::get_option_value( 'breeze-delay-all-js' ) )
-	     || ! empty( Breeze_Options_Reader::get_option_value( 'breeze-delay-js-scripts' ) )
+		 || ! empty( Breeze_Options_Reader::get_option_value( 'breeze-minify-js' ) )
+		 || ! empty( Breeze_Options_Reader::get_option_value( 'breeze-minify-css' ) )
+		 || ! empty( Breeze_Options_Reader::get_option_value( 'breeze-minify-html' ) )
+		 || ! empty( Breeze_Options_Reader::get_option_value( 'breeze-defer-js' ) )
+		 || ! empty( Breeze_Options_Reader::get_option_value( 'breeze-move-to-footer-js' ) )
+		 || ! empty( Breeze_Options_Reader::get_option_value( 'breeze-delay-all-js' ) )
+		 || ! empty( Breeze_Options_Reader::get_option_value( 'breeze-enable-js-delay' ) )
 	) {
 		// Call back ob start
 		ob_start( 'breeze_ob_start_callback' );
@@ -163,9 +169,13 @@ if ( $api_enabled ) {
 /**
  * Store files locally, First buffer controller to occur in this plugin
  */
-add_action( 'init', function () {
-	ob_start( 'breeze_ob_start_localfiles_callback' );
-}, 5 );
+add_action(
+	'init',
+	function () {
+		ob_start( 'breeze_ob_start_localfiles_callback' );
+	},
+	5
+);
 
 
 /**
@@ -177,16 +187,14 @@ add_action( 'init', function () {
 function breeze_check_versions() {
 	// Get Breeze version in DB
 	if (
-		false === is_network_admin() &&
-		(
 			( function_exists( 'is_ajax' ) && false === is_ajax() ) ||
 			( function_exists( 'wp_doing_ajax' ) && false === wp_doing_ajax() )
-		)
 	) {
 		$db_breeze_version = get_option( 'breeze_version' ); // breeze_version
 
 		if ( ! $db_breeze_version || version_compare( BREEZE_VERSION, $db_breeze_version, '!=' ) ) {
 			update_option( 'breeze_version', BREEZE_VERSION, 'no' );
+			Breeze_ConfigCache::factory()->write();
 			do_action( 'breeze_clear_all_cache' );
 		}
 	}
@@ -235,6 +243,10 @@ function breeze_ob_start_localfiles_callback( $buffer ) {
 // Call back ob start - stack
 function breeze_ob_start_callback( $buffer ) {
 
+	if ( ! empty( $_SERVER ) && ! empty( $_SERVER['REQUEST_URI'] ) && strpos( $_SERVER['REQUEST_URI'], 'context=edit' ) ) {
+		return $buffer;
+	}
+
 	// Get buffer from minify
 	$buffer = apply_filters( 'breeze_minify_content_return', $buffer );
 
@@ -281,28 +293,6 @@ require_once BREEZE_PLUGIN_DIR . 'inc/wp-cli/class-breeze-wp-cli-core.php';
 
 // Reset to default
 add_action( 'breeze_reset_default', array( 'Breeze_Admin', 'plugin_deactive_hook' ), 80 );
-
-add_action(
-	'init',
-	function () {
-
-		if ( ! isset( $_GET['reset'] ) || $_GET['reset'] != 'default' ) {
-			return false;
-		}
-
-		$admin = new Breeze_Admin();
-
-		if ( $admin->reset_to_default() ) {
-			$route = $widget_id = str_replace( '&reset=default', '', $_SERVER['REQUEST_URI'] );
-
-			$redirect_page = $route;
-
-			header( 'Location: ' . $redirect_page );
-			die();
-		}
-
-	}
-);
 
 /**
  * Add Scheduled event hook

@@ -34,9 +34,7 @@ if ( ! class_exists( 'EWWW_Nextcellent' ) ) {
 			add_action( 'admin_action_ewww_ngg_manual', array( $this, 'ewww_ngg_manual' ) );
 			add_action( 'admin_menu', array( $this, 'ewww_ngg_bulk_menu' ) );
 			add_action( 'admin_enqueue_scripts', array( $this, 'ewww_ngg_bulk_script' ), 9 );
-			add_action( 'wp_ajax_bulk_ngg_preview', array( $this, 'ewww_ngg_bulk_preview' ) );
 			add_action( 'wp_ajax_bulk_ngg_init', array( $this, 'ewww_ngg_bulk_init' ) );
-			add_action( 'wp_ajax_bulk_ngg_filename', array( $this, 'ewww_ngg_bulk_filename' ) );
 			add_action( 'wp_ajax_bulk_ngg_loop', array( $this, 'ewww_ngg_bulk_loop' ) );
 			add_action( 'wp_ajax_bulk_ngg_cleanup', array( $this, 'ewww_ngg_bulk_cleanup' ) );
 			add_action( 'ngg_ajax_image_save', array( $this, 'ewww_ngg_image_save' ) );
@@ -84,7 +82,6 @@ if ( ! class_exists( 'EWWW_Nextcellent' ) ) {
 		/**
 		 * Optimizes a new image in foreground mode.
 		 *
-		 * @global bool $ewww_defer Set to false to avoid deferring image optimization.
 		 * @global object $wpdb
 		 * @global object $ewww_image Contains more information about the image currently being processed.
 		 *
@@ -92,7 +89,6 @@ if ( ! class_exists( 'EWWW_Nextcellent' ) ) {
 		 */
 		public function ewww_added_new_image_slow( $image ) {
 			// Query the filesystem path of the gallery from the database.
-			global $ewww_defer;
 			global $wpdb;
 			global $ewww_image;
 			$gallery_path = $wpdb->get_var( $wpdb->prepare( "SELECT path FROM {$wpdb->prefix}ngg_gallery WHERE gid = %d LIMIT 1", $image['galleryID'] ) );
@@ -110,14 +106,12 @@ if ( ! class_exists( 'EWWW_Nextcellent' ) ) {
 		/**
 		 * Optimizes the thumbnail generated for a new upload.
 		 *
-		 * @global bool $ewww_defer Set to false to avoid deferring image optimization.
 		 * @global object $ewww_image Contains more information about the image currently being processed.
 		 *
 		 * @param string $filename The name of the file generated.
 		 */
 		public function ewww_ngg_image_save( $filename ) {
 			ewwwio_debug_message( '<b>' . __METHOD__ . '()</b>' );
-			global $ewww_defer;
 			global $ewww_image;
 			ewwwio_debug_message( 'nextcellent new image thumb' );
 			if ( empty( $_REQUEST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['_wpnonce'] ), 'ngg-ajax' ) ) {
@@ -170,8 +164,7 @@ if ( ! class_exists( 'EWWW_Nextcellent' ) ) {
 				ewwwio_ob_clean();
 				wp_die( wp_json_encode( array( 'error' => esc_html__( 'Access denied.', 'ewww-image-optimizer' ) ) ) );
 			}
-			global $ewww_force;
-			$ewww_force = ! empty( $_REQUEST['ewww_force'] ) ? true : false;
+			ewwwio()->force = ! empty( $_REQUEST['ewww_force'] ) ? true : false;
 			$this->ewww_ngg_optimize( $id );
 			$success = $this->ewww_manage_image_custom_column( 'ewww_image_optimizer', $id, true );
 			if ( ! wp_doing_ajax() ) {
@@ -401,7 +394,7 @@ if ( ! class_exists( 'EWWW_Nextcellent' ) ) {
 				<h1><?php esc_html_e( 'Bulk Optimize', 'ewww-image-optimizer' ); ?></h1>
 				<?php
 				if ( ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ) ) {
-					ewww_image_optimizer_cloud_verify( ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ) );
+					ewww_image_optimizer_cloud_verify( ewww_image_optimizer_get_option( 'ewww_image_optimizer_cloud_key' ), false );
 					echo '<a id="ewww-bulk-credits-available" target="_blank" class="page-title-action" style="float:right;" href="https://ewww.io/my-account/">' . esc_html__( 'Image credits available:', 'ewww-image-optimizer' ) . ' ' . esc_html( ewww_image_optimizer_cloud_quota() ) . '</a>';
 				}
 				// Retrieve the value of the 'bulk resume' option and set the button text for the form to use.
@@ -544,7 +537,7 @@ if ( ! class_exists( 'EWWW_Nextcellent' ) ) {
 				$attachments = unserialize( $attachments );
 			}
 			if ( ! is_array( $attachments ) ) {
-				$output['error'] = esc_html__( 'Error retrieving list of images' );
+				$output['error'] = esc_html__( 'Error retrieving list of images', 'ewww-image-optimizer' );
 				ewwwio_ob_clean();
 				wp_die( wp_json_encode( $output ) );
 			}
@@ -582,14 +575,11 @@ if ( ! class_exists( 'EWWW_Nextcellent' ) ) {
 
 		/**
 		 * Process each image in the bulk queue.
-		 *
-		 * @global bool $ewww_defer Set to false to avoid deferring image optimization.
 		 */
 		public function ewww_ngg_bulk_loop() {
-			global $ewww_defer;
-			$ewww_defer  = false;
-			$output      = array();
-			$permissions = apply_filters( 'ewww_image_optimizer_bulk_permissions', '' );
+			ewwwio()->defer = false;
+			$output         = array();
+			$permissions    = apply_filters( 'ewww_image_optimizer_bulk_permissions', '' );
 			if ( empty( $_REQUEST['ewww_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['ewww_wpnonce'] ), 'ewww-image-optimizer-bulk' ) || ! current_user_can( $permissions ) ) {
 				$outupt['error'] = esc_html__( 'Access token has expired, please reload the page.', 'ewww-image-optimizer' );
 				ewwwio_ob_clean();
@@ -610,12 +600,17 @@ if ( ! class_exists( 'EWWW_Nextcellent' ) ) {
 			$id                  = array_shift( $attachments );
 			list( $fres, $tres ) = $this->ewww_ngg_optimize( $id );
 			if ( 'exceeded' === get_transient( 'ewww_image_optimizer_cloud_status' ) ) {
-				$output['error'] = '<a href="https://ewww.io/buy-credits/" target="_blank">' . esc_html__( 'License Exceeded', 'ewww-image-optimizer' ) . '</a>';
+				$output['error'] = ewww_image_optimizer_credits_exceeded();
 				ewwwio_ob_clean();
 				wp_die( wp_json_encode( $output ) );
 			}
 			if ( 'exceeded quota' === get_transient( 'ewww_image_optimizer_cloud_status' ) ) {
-				$output['error'] = '<a href="https://docs.ewww.io/article/101-soft-quotas-on-unlimited-plans" target="_blank">' . esc_html__( 'Soft quota reached, contact us for more', 'ewww-image-optimizer' ) . '</a>';
+				$output['error'] = ewww_image_optimizer_soft_quota_exceeded();
+				ewwwio_ob_clean();
+				wp_die( wp_json_encode( $output ) );
+			}
+			if ( 'exceeded subkey' === get_transient( 'ewww_image_optimizer_cloud_status' ) ) {
+				$output['error'] = esc_html__( 'Out of credits', 'ewww-image-optimizer' );
 				ewwwio_ob_clean();
 				wp_die( wp_json_encode( $output ) );
 			}

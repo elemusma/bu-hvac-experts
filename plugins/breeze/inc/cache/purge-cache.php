@@ -28,6 +28,7 @@ class Breeze_PurgeCache {
 		add_action( 'pre_post_update', array( $this, 'purge_post_on_update' ), 10, 1 );
 		add_action( 'save_post', array( $this, 'purge_post_on_update' ), 10, 1 );
 		add_action( 'save_post', array( $this, 'purge_post_on_update_content' ), 9, 3 );
+		add_action( 'edited_term', array( $this, 'purge_term_on_update' ), 9, 3 );
 		add_action( 'wp_trash_post', array( $this, 'purge_post_on_update' ), 10, 1 );
 		add_action( 'wp_trash_post', array( $this, 'purge_post_on_trash' ), 9, 1 );
 		add_action( 'comment_post', array( $this, 'purge_post_on_new_comment' ), 10, 3 );
@@ -109,6 +110,21 @@ class Breeze_PurgeCache {
 
 		if ( did_action( 'edit_post' ) ) {
 			return;
+		}
+
+		// File based caching only
+		if ( ! empty( Breeze_Options_Reader::get_option_value( 'breeze-active' ) ) ) {
+			self::breeze_cache_flush( $do_cache_reset, $clear_wp_cache );
+		}
+	}
+
+	//    Automatically purge all file based term cache on post changes
+	public function purge_term_on_update() {
+
+		$do_cache_reset = true;
+		$clear_wp_cache = true;
+		if ( defined( 'RedisCachePro\Version' ) ) {
+			$clear_wp_cache = false;
 		}
 
 		// File based caching only
@@ -283,8 +299,8 @@ class Breeze_PurgeCache {
 			}
 
 			$url_path = get_permalink( $post_id );
-			if ( $wp_filesystem->exists( breeze_get_cache_base_path() . md5( $url_path ) ) ) {
-				$wp_filesystem->rmdir( breeze_get_cache_base_path() . md5( $url_path ), true );
+			if ( $wp_filesystem->exists( breeze_get_cache_base_path() . hash( 'sha512', $url_path ) ) ) {
+				$wp_filesystem->rmdir( breeze_get_cache_base_path() . hash( 'sha512', $url_path ), true );
 			}
 		}
 	}
@@ -305,8 +321,8 @@ class Breeze_PurgeCache {
 
 				Breeze_CloudFlare_Helper::purge_cloudflare_cache_urls( array( $url_path ) );
 
-				if ( $wp_filesystem->exists( breeze_get_cache_base_path() . md5( $url_path ) ) ) {
-					$wp_filesystem->rmdir( breeze_get_cache_base_path() . md5( $url_path ), true );
+				if ( $wp_filesystem->exists( breeze_get_cache_base_path() . hash( 'sha512', $url_path ) ) ) {
+					$wp_filesystem->rmdir( breeze_get_cache_base_path() . hash( 'sha512', $url_path ), true );
 				}
 			}
 		}
@@ -332,10 +348,10 @@ class Breeze_PurgeCache {
 		$cache_path = breeze_get_cache_base_path( is_network_admin() );
 		$wp_filesystem->rmdir( untrailingslashit( $cache_path ), true );
 
-		if ( true === $flush_cache && ! empty( $post ) ) {
+		if ( true === $flush_cache && ! empty( $post ) && is_object( $post ) ) {
 			$post_type = get_post_type( $post->ID );
 
-			$flush_cache = true;
+			$flush_cache         = true;
 			$ignore_object_cache = array(
 				'tribe_events',
 				'shop_order',
@@ -349,12 +365,12 @@ class Breeze_PurgeCache {
 			$flush_cache = false;
 		}
 
-		if ( function_exists( 'wp_cache_flush' ) && true === $flush_cache && true === $clear_ocp  ) {
+		if ( function_exists( 'wp_cache_flush' ) && true === $flush_cache && true === $clear_ocp ) {
 			if ( true === Breeze_CloudFlare_Helper::is_log_enabled() ) {
 				error_log( '######### PURGE OBJECT CACHE ###: ' . var_export( 'true', true ) );
 			}
 			#if ( ! defined( 'RedisCachePro\Version' ) && ! defined( 'WP_REDIS_VERSION' ) ) {
-				wp_cache_flush();
+			wp_cache_flush();
 			#}
 
 		}

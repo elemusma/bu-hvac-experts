@@ -118,6 +118,22 @@ h1,
   font-weight: 400;
 }
 
+.blair-itc {
+  font-family: 'blair_itc_mediumregular';
+}
+
+.blair-itc-light {
+  font-family: 'blairitc_ttlight';
+}
+
+.proxima-bold {
+  font-family: 'proxima_nova_altbold';
+}
+
+.proxima-thin {
+  font-family: 'proxima_novathin';
+}
+
 h1,.h1 {
   font-size: 3rem;
 }
